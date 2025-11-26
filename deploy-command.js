@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { REST, Routes } from '@discordjs/rest';
+import { REST, Routes } from 'discord.js';
 import Logger from './logger.js';
 import config from './config.js';
 
@@ -48,6 +48,42 @@ const commands = [
         max_value: 100,
       },
     ],
+  },
+  {
+    name: 'rank',
+    description: 'Check your level and rank',
+    options: [
+      {
+        name: 'user',
+        type: 6, // USER type
+        description: 'User to check (leave empty for yourself)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'leaderboard',
+    description: 'View the server leaderboard',
+    options: [
+      {
+        name: 'type',
+        type: 3, // STRING type
+        description: 'Leaderboard type',
+        required: false,
+        choices: [
+          { name: 'All Time', value: 'alltime' },
+          { name: 'Weekly', value: 'weekly' },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'daily',
+    description: 'Claim your daily XP bonus',
+  },
+  {
+    name: 'prestige',
+    description: 'Prestige and reset your level for a special rank (requires level 50)',
   },
 ];
 

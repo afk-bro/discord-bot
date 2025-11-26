@@ -1,8 +1,9 @@
 import 'dotenv/config';
-import { Client, GatewayIntentBits, ActivityType } from 'discord.js';
+import { Client, GatewayIntentBits, ActivityType, EmbedBuilder } from 'discord.js';
 import config from './config.js';
 import serverSettings from './serverSettings.js';
 import Logger from './logger.js';
+import levelingSystem from './levelingSystem.js';
 
 // Initialize logger
 const logger = new Logger(config.logging);
@@ -36,6 +37,16 @@ client.once('ready', async () => {
   } catch (error) {
     await logger.error('Failed to load server settings', { error: error.message });
   }
+  
+  // Load leveling system
+  if (config.leveling.enabled) {
+    try {
+      await levelingSystem.load();
+      await logger.info('Leveling system loaded successfully');
+    } catch (error) {
+      await logger.error('Failed to load leveling system', { error: error.message });
+    }
+  }
 });
 
 // Guild join event - log and initialize settings
@@ -54,6 +65,45 @@ client.on('guildDelete', async (guild) => {
 client.on('messageCreate', async (message) => {
   // Ignore messages from bots (including itself)
   if (config.bot.ignoreBots && message.author.bot) return;
+  
+  // Track XP for non-command messages
+  if (config.leveling.enabled && message.guild && !message.content.startsWith(config.prefix)) {
+    try {
+      const hasMedia = message.attachments.size > 0 || message.embeds.length > 0;
+      const isLongMessage = message.content.length > 200;
+      
+      const result = await levelingSystem.addXp(message.author.id, message.guild.id, {
+        hasMedia,
+        isLongMessage,
+      });
+      
+      // Handle level up
+      if (result && result.newLevel) {
+        const titleData = levelingSystem.getUserTitle(message.author.id, message.guild.id);
+        const xpNeeded = levelingSystem.getXpForLevel(result.newLevel + 1);
+        
+        const embed = new EmbedBuilder()
+          .setColor('#FFD700')
+          .setTitle('🎉 LEVEL UP! 🎉')
+          .setDescription(`<@${message.author.id}> has reached **Level ${result.newLevel}**!`)
+          .addFields(
+            { name: 'New Title', value: titleData.title, inline: true },
+            { name: 'Total XP', value: result.totalXp.toString(), inline: true },
+            { name: 'Next Level', value: `${xpNeeded} XP needed`, inline: true }
+          )
+          .setThumbnail(message.author.displayAvatarURL())
+          .setTimestamp();
+        
+        if (result.canPrestige) {
+          embed.addFields({ name: '👑 Prestige Available!', value: 'You can now prestige! Use `/prestige` to reset and gain prestige rank.' });
+        }
+        
+        await message.channel.send({ embeds: [embed] });
+      }
+    } catch (error) {
+      await logger.error('Failed to add XP', { error: error.message });
+    }
+  }
   
   // Get server-specific prefix (or use default)
   const prefix = message.guild 
@@ -189,6 +239,104 @@ client.on('messageCreate', async (message) => {
       await logger.commandExecuted('dice', message.author, message.guild);
     }
     
+    // Leveling command: !rank or !level
+    else if (commandName === 'rank' || commandName === 'level') {
+      if (!message.guild) {
+        await message.reply('❌ This command can only be used in a server.');
+        return;
+      }
+      
+      const targetUser = message.mentions.users.first() || message.author;
+      const userData = levelingSystem.getUser(targetUser.id, message.guild.id);
+      const titleData = levelingSystem.getUserTitle(targetUser.id, message.guild.id);
+      const xpNeeded = levelingSystem.getXpForLevel(userData.level + 1);
+      const rank = levelingSystem.getUserRank(targetUser.id, message.guild.id);
+      
+      const embed = new EmbedBuilder()
+        .setColor('#00BFFF')
+        .setTitle(`${titleData.emoji} ${targetUser.username}'s Rank`)
+        .setThumbnail(targetUser.displayAvatarURL())
+        .addFields(
+          { name: 'Level', value: `${userData.level}`, inline: true },
+          { name: 'Rank', value: `#${rank || 'N/A'}`, inline: true },
+          { name: 'Prestige', value: `${userData.prestige}`, inline: true },
+          { name: 'XP Progress', value: `${userData.xp}/${xpNeeded}`, inline: true },
+          { name: 'Total XP', value: `${userData.totalXp}`, inline: true },
+          { name: 'Messages', value: `${userData.messages}`, inline: true },
+          { name: 'Title', value: titleData.title, inline: false }
+        )
+        .setTimestamp();
+      
+      await message.reply({ embeds: [embed] });
+      await logger.commandExecuted('rank', message.author, message.guild);
+    }
+    
+    // Leveling command: !leaderboard or !lb
+    else if (commandName === 'leaderboard' || commandName === 'lb') {
+      if (!message.guild) {
+        await message.reply('❌ This command can only be used in a server.');
+        return;
+      }
+      
+      const isWeekly = args[0] === 'weekly' || args[0] === 'week';
+      const leaderboard = levelingSystem.getLeaderboard(message.guild.id, 10, isWeekly);
+      
+      if (leaderboard.length === 0) {
+        await message.reply('📊 No users ranked yet!');
+        return;
+      }
+      
+      let description = '';
+      for (let i = 0; i < leaderboard.length; i++) {
+        const user = leaderboard[i];
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        const titleData = levelingSystem.getUserTitle(user.userId, message.guild.id);
+        const xpDisplay = isWeekly ? user.weeklyXp : user.totalXp;
+        description += `${medal} <@${user.userId}> - Level ${user.level} (${xpDisplay} XP)\\n${titleData.emoji} ${titleData.title}\\n\\n`;
+      }
+      
+      const embed = new EmbedBuilder()
+        .setColor('#FFD700')
+        .setTitle(`🏆 ${isWeekly ? 'Weekly' : 'All-Time'} Leaderboard`)
+        .setDescription(description)
+        .setFooter({ text: `${message.guild.name}` })
+        .setTimestamp();
+      
+      await message.reply({ embeds: [embed] });
+      await logger.commandExecuted('leaderboard', message.author, message.guild);
+    }
+    
+    // Leveling command: !daily
+    else if (commandName === 'daily') {
+      if (!message.guild) {
+        await message.reply('❌ This command can only be used in a server.');
+        return;
+      }
+      
+      const result = await levelingSystem.claimDailyBonus(message.author.id, message.guild.id);
+      
+      if (!result.claimed) {
+        const hours = Math.floor(result.timeLeft / 3600000);
+        const minutes = Math.floor((result.timeLeft % 3600000) / 60000);
+        await message.reply(`⏱️ You've already claimed your daily bonus! Come back in ${hours}h ${minutes}m.`);
+        return;
+      }
+      
+      const embed = new EmbedBuilder()
+        .setColor('#00FF00')
+        .setTitle('🎁 Daily Bonus Claimed!')
+        .setDescription(`You received **${result.xpGained} XP**!`)
+        .setFooter({ text: 'Come back tomorrow for another bonus!' })
+        .setTimestamp();
+      
+      if (result.leveledUp) {
+        embed.addFields({ name: '🎉 Level Up!', value: `You are now level ${result.newLevel}!` });
+      }
+      
+      await message.reply({ embeds: [embed] });
+      await logger.commandExecuted('daily', message.author, message.guild);
+    }
+    
   } catch (error) {
     await logger.commandError(commandName, error, message.author, message.guild);
     
@@ -294,6 +442,117 @@ client.on('interactionCreate', async (interaction) => {
       const result = Math.floor(Math.random() * sides) + 1;
       await interaction.reply(`🎲 You rolled a **${result}** (1-${sides})`);
       await logger.commandExecuted('dice', interaction.user, interaction.guild);
+    }
+    
+    // Leveling command: /rank
+    else if (interaction.commandName === 'rank') {
+      const targetUser = interaction.options.getUser('user') || interaction.user;
+      const userData = levelingSystem.getUser(targetUser.id, interaction.guild.id);
+      const titleData = levelingSystem.getUserTitle(targetUser.id, interaction.guild.id);
+      const xpNeeded = levelingSystem.getXpForLevel(userData.level + 1);
+      const rank = levelingSystem.getUserRank(targetUser.id, interaction.guild.id);
+      
+      const embed = new EmbedBuilder()
+        .setColor('#00BFFF')
+        .setTitle(`${titleData.emoji} ${targetUser.username}'s Rank`)
+        .setThumbnail(targetUser.displayAvatarURL())
+        .addFields(
+          { name: 'Level', value: `${userData.level}`, inline: true },
+          { name: 'Rank', value: `#${rank || 'N/A'}`, inline: true },
+          { name: 'Prestige', value: `${userData.prestige}`, inline: true },
+          { name: 'XP Progress', value: `${userData.xp}/${xpNeeded}`, inline: true },
+          { name: 'Total XP', value: `${userData.totalXp}`, inline: true },
+          { name: 'Messages', value: `${userData.messages}`, inline: true },
+          { name: 'Title', value: titleData.title, inline: false }
+        )
+        .setTimestamp();
+      
+      await interaction.reply({ embeds: [embed] });
+      await logger.commandExecuted('rank', interaction.user, interaction.guild);
+    }
+    
+    // Leveling command: /leaderboard
+    else if (interaction.commandName === 'leaderboard') {
+      const type = interaction.options.getString('type') || 'alltime';
+      const isWeekly = type === 'weekly';
+      const leaderboard = levelingSystem.getLeaderboard(interaction.guild.id, 10, isWeekly);
+      
+      if (leaderboard.length === 0) {
+        await interaction.reply('📊 No users ranked yet!');
+        return;
+      }
+      
+      let description = '';
+      for (let i = 0; i < leaderboard.length; i++) {
+        const user = leaderboard[i];
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        const titleData = levelingSystem.getUserTitle(user.userId, interaction.guild.id);
+        const xpDisplay = isWeekly ? user.weeklyXp : user.totalXp;
+        description += `${medal} <@${user.userId}> - Level ${user.level} (${xpDisplay} XP)\\n${titleData.emoji} ${titleData.title}\\n\\n`;
+      }
+      
+      const embed = new EmbedBuilder()
+        .setColor('#FFD700')
+        .setTitle(`🏆 ${isWeekly ? 'Weekly' : 'All-Time'} Leaderboard`)
+        .setDescription(description)
+        .setFooter({ text: `${interaction.guild.name}` })
+        .setTimestamp();
+      
+      await interaction.reply({ embeds: [embed] });
+      await logger.commandExecuted('leaderboard', interaction.user, interaction.guild);
+    }
+    
+    // Leveling command: /daily
+    else if (interaction.commandName === 'daily') {
+      const result = await levelingSystem.claimDailyBonus(interaction.user.id, interaction.guild.id);
+      
+      if (!result.claimed) {
+        const hours = Math.floor(result.timeLeft / 3600000);
+        const minutes = Math.floor((result.timeLeft % 3600000) / 60000);
+        await interaction.reply(`⏱️ You've already claimed your daily bonus! Come back in ${hours}h ${minutes}m.`);
+        return;
+      }
+      
+      const embed = new EmbedBuilder()
+        .setColor('#00FF00')
+        .setTitle('🎁 Daily Bonus Claimed!')
+        .setDescription(`You received **${result.xpGained} XP**!`)
+        .setFooter({ text: 'Come back tomorrow for another bonus!' })
+        .setTimestamp();
+      
+      if (result.leveledUp) {
+        embed.addFields({ name: '🎉 Level Up!', value: `You are now level ${result.newLevel}!` });
+      }
+      
+      await interaction.reply({ embeds: [embed] });
+      await logger.commandExecuted('daily', interaction.user, interaction.guild);
+    }
+    
+    // Leveling command: /prestige
+    else if (interaction.commandName === 'prestige') {
+      const result = await levelingSystem.prestige(interaction.user.id, interaction.guild.id);
+      
+      if (!result.success) {
+        await interaction.reply('❌ You need to be level 50 to prestige!');
+        return;
+      }
+      
+      const prestigeData = levelingSystem.getUserTitle(interaction.user.id, interaction.guild.id);
+      
+      const embed = new EmbedBuilder()
+        .setColor('#9B59B6')
+        .setTitle('👑 PRESTIGE ACHIEVED! 👑')
+        .setDescription(`<@${interaction.user.id}> has reached **Prestige ${result.newPrestige}**!`)
+        .addFields(
+          { name: 'New Title', value: prestigeData.title, inline: false },
+          { name: 'Retained XP', value: `${result.retainedXp} (10%)`, inline: true },
+          { name: 'New Level', value: `${result.newLevel}`, inline: true }
+        )
+        .setThumbnail(interaction.user.displayAvatarURL())
+        .setTimestamp();
+      
+      await interaction.reply({ embeds: [embed] });
+      await logger.commandExecuted('prestige', interaction.user, interaction.guild);
     }
     
   } catch (error) {

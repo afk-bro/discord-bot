@@ -35,4 +35,11 @@ export default {
     file: true, // Set to false to disable file logging
     logLevel: 'info', // 'debug', 'info', 'warn', 'error'
   },
+  
+  // Leveling system
+  leveling: {
+    enabled: true,
+    sendLevelUpMessages: true,
+    levelUpChannel: null, // null = send in same channel, or specify channel ID
+  },
 };

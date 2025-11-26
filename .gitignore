@@ -11,6 +11,9 @@ logs/
 # Server settings (contains guild-specific config)
 server-settings.json
 
+# User leveling data
+user-levels.json
+
 # IDE
 .vscode/
 .idea/
