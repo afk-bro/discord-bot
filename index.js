@@ -96,6 +96,99 @@ client.on('messageCreate', async (message) => {
       await logger.commandExecuted('setprefix', message.author, message.guild);
     }
     
+    // Fun command: !8ball
+    else if (commandName === '8ball') {
+      const question = args.join(' ');
+      if (!question) {
+        await message.reply(`❓ Please ask a question! Usage: ${prefix}8ball <question>`);
+        return;
+      }
+      
+      const responses = [
+        '🎱 It is certain.',
+        '🎱 Without a doubt.',
+        '🎱 Yes, definitely.',
+        '🎱 You may rely on it.',
+        '🎱 As I see it, yes.',
+        '🎱 Most likely.',
+        '🎱 Outlook good.',
+        '🎱 Yes.',
+        '🎱 Signs point to yes.',
+        '🎱 Reply hazy, try again.',
+        '🎱 Ask again later.',
+        '🎱 Better not tell you now.',
+        '🎱 Cannot predict now.',
+        '🎱 Concentrate and ask again.',
+        '🎱 Don\'t count on it.',
+        '🎱 My reply is no.',
+        '🎱 My sources say no.',
+        '🎱 Outlook not so good.',
+        '🎱 Very doubtful.',
+      ];
+      
+      const answer = responses[Math.floor(Math.random() * responses.length)];
+      await message.reply(`**Question:** ${question}\n${answer}`);
+      await logger.commandExecuted('8ball', message.author, message.guild);
+    }
+    
+    // Fun command: !joke
+    else if (commandName === 'joke') {
+      const jokes = [
+        'Why do programmers prefer dark mode? Because light attracts bugs! 🐛',
+        'Why did the developer go broke? Because he used up all his cache! 💰',
+        'How many programmers does it take to change a light bulb? None, that\'s a hardware problem! 💡',
+        'Why do Java developers wear glasses? Because they don\'t C#! 👓',
+        'What\'s a programmer\'s favorite hangout place? Foo Bar! 🍺',
+        'Why did the function break up with the variable? Because it had too many arguments! 💔',
+        'What do you call a programmer from Finland? Nerdic! 🇫🇮',
+        'Why did the programmer quit his job? Because he didn\'t get arrays! 📊',
+      ];
+      
+      const joke = jokes[Math.floor(Math.random() * jokes.length)];
+      await message.reply(joke);
+      await logger.commandExecuted('joke', message.author, message.guild);
+    }
+    
+    // Fun command: !quote
+    else if (commandName === 'quote') {
+      const quotes = [
+        '"The only way to do great work is to love what you do." - Steve Jobs',
+        '"Code is like humor. When you have to explain it, it\'s bad." - Cory House',
+        '"First, solve the problem. Then, write the code." - John Johnson',
+        '"Experience is the name everyone gives to their mistakes." - Oscar Wilde',
+        '"In order to be irreplaceable, one must always be different." - Coco Chanel',
+        '"Java is to JavaScript what car is to Carpet." - Chris Heilmann',
+        '"Knowledge is power." - Francis Bacon',
+        '"Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday\'s code." - Dan Salomon',
+        '"Perfection is achieved not when there is nothing more to add, but rather when there is nothing more to take away." - Antoine de Saint-Exupery',
+        '"Talk is cheap. Show me the code." - Linus Torvalds',
+      ];
+      
+      const quote = quotes[Math.floor(Math.random() * quotes.length)];
+      await message.reply(`💭 ${quote}`);
+      await logger.commandExecuted('quote', message.author, message.guild);
+    }
+    
+    // Fun command: !coinflip
+    else if (commandName === 'coinflip' || commandName === 'flip') {
+      const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
+      await message.reply(`🪙 The coin landed on: **${result}**!`);
+      await logger.commandExecuted('coinflip', message.author, message.guild);
+    }
+    
+    // Fun command: !dice or !roll
+    else if (commandName === 'dice' || commandName === 'roll') {
+      const sides = parseInt(args[0]) || 6;
+      if (sides < 2 || sides > 100) {
+        await message.reply('🎲 Please specify a number between 2 and 100!');
+        return;
+      }
+      
+      const result = Math.floor(Math.random() * sides) + 1;
+      await message.reply(`🎲 You rolled a **${result}** (1-${sides})`);
+      await logger.commandExecuted('dice', message.author, message.guild);
+    }
+    
   } catch (error) {
     await logger.commandError(commandName, error, message.author, message.guild);
     
@@ -117,6 +210,90 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.commandName === 'hello') {
       await interaction.reply('Hey there! 👋');
       await logger.commandExecuted('hello', interaction.user, interaction.guild);
+    }
+    
+    // Fun command: /8ball
+    else if (interaction.commandName === '8ball') {
+      const question = interaction.options.getString('question');
+      
+      const responses = [
+        '🎱 It is certain.',
+        '🎱 Without a doubt.',
+        '🎱 Yes, definitely.',
+        '🎱 You may rely on it.',
+        '🎱 As I see it, yes.',
+        '🎱 Most likely.',
+        '🎱 Outlook good.',
+        '🎱 Yes.',
+        '🎱 Signs point to yes.',
+        '🎱 Reply hazy, try again.',
+        '🎱 Ask again later.',
+        '🎱 Better not tell you now.',
+        '🎱 Cannot predict now.',
+        '🎱 Concentrate and ask again.',
+        '🎱 Don\'t count on it.',
+        '🎱 My reply is no.',
+        '🎱 My sources say no.',
+        '🎱 Outlook not so good.',
+        '🎱 Very doubtful.',
+      ];
+      
+      const answer = responses[Math.floor(Math.random() * responses.length)];
+      await interaction.reply(`**Question:** ${question}\n${answer}`);
+      await logger.commandExecuted('8ball', interaction.user, interaction.guild);
+    }
+    
+    // Fun command: /joke
+    else if (interaction.commandName === 'joke') {
+      const jokes = [
+        'Why do programmers prefer dark mode? Because light attracts bugs! 🐛',
+        'Why did the developer go broke? Because he used up all his cache! 💰',
+        'How many programmers does it take to change a light bulb? None, that\'s a hardware problem! 💡',
+        'Why do Java developers wear glasses? Because they don\'t C#! 👓',
+        'What\'s a programmer\'s favorite hangout place? Foo Bar! 🍺',
+        'Why did the function break up with the variable? Because it had too many arguments! 💔',
+        'What do you call a programmer from Finland? Nerdic! 🇫🇮',
+        'Why did the programmer quit his job? Because he didn\'t get arrays! 📊',
+      ];
+      
+      const joke = jokes[Math.floor(Math.random() * jokes.length)];
+      await interaction.reply(joke);
+      await logger.commandExecuted('joke', interaction.user, interaction.guild);
+    }
+    
+    // Fun command: /quote
+    else if (interaction.commandName === 'quote') {
+      const quotes = [
+        '"The only way to do great work is to love what you do." - Steve Jobs',
+        '"Code is like humor. When you have to explain it, it\'s bad." - Cory House',
+        '"First, solve the problem. Then, write the code." - John Johnson',
+        '"Experience is the name everyone gives to their mistakes." - Oscar Wilde',
+        '"In order to be irreplaceable, one must always be different." - Coco Chanel',
+        '"Java is to JavaScript what car is to Carpet." - Chris Heilmann',
+        '"Knowledge is power." - Francis Bacon',
+        '"Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday\'s code." - Dan Salomon',
+        '"Perfection is achieved not when there is nothing more to add, but rather when there is nothing more to take away." - Antoine de Saint-Exupery',
+        '"Talk is cheap. Show me the code." - Linus Torvalds',
+      ];
+      
+      const quote = quotes[Math.floor(Math.random() * quotes.length)];
+      await interaction.reply(`💭 ${quote}`);
+      await logger.commandExecuted('quote', interaction.user, interaction.guild);
+    }
+    
+    // Fun command: /coinflip
+    else if (interaction.commandName === 'coinflip') {
+      const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
+      await interaction.reply(`🪙 The coin landed on: **${result}**!`);
+      await logger.commandExecuted('coinflip', interaction.user, interaction.guild);
+    }
+    
+    // Fun command: /dice
+    else if (interaction.commandName === 'dice') {
+      const sides = interaction.options.getInteger('sides') || 6;
+      const result = Math.floor(Math.random() * sides) + 1;
+      await interaction.reply(`🎲 You rolled a **${result}** (1-${sides})`);
+      await logger.commandExecuted('dice', interaction.user, interaction.guild);
     }
     
   } catch (error) {

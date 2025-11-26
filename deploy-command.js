@@ -11,6 +11,44 @@ const commands = [
     name: 'hello',
     description: 'Replies with a friendly greeting',
   },
+  {
+    name: '8ball',
+    description: 'Ask the magic 8-ball a question',
+    options: [
+      {
+        name: 'question',
+        type: 3, // STRING type
+        description: 'Your question for the 8-ball',
+        required: true,
+      },
+    ],
+  },
+  {
+    name: 'joke',
+    description: 'Get a random programming joke',
+  },
+  {
+    name: 'quote',
+    description: 'Get an inspiring quote',
+  },
+  {
+    name: 'coinflip',
+    description: 'Flip a coin (heads or tails)',
+  },
+  {
+    name: 'dice',
+    description: 'Roll a dice',
+    options: [
+      {
+        name: 'sides',
+        type: 4, // INTEGER type
+        description: 'Number of sides on the dice (default: 6, max: 100)',
+        required: false,
+        min_value: 2,
+        max_value: 100,
+      },
+    ],
+  },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
