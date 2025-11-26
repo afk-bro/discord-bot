@@ -7,86 +7,48 @@ const __dirname = path.dirname(__filename);
 
 const LEVELS_FILE = path.join(__dirname, 'user-levels.json');
 
-// Leveling configuration
 const LEVEL_CONFIG = {
-  xpPerMessage: 20,
-  xpRandomBonus: 15,
-  cooldown: 60000,
-  xpMultiplier: 150,
-  bonusMediaUpload: 25,
-  bonusLongMessage: 15,
-  bonusVoicePerMinute: 10,
-  dailyLoginBonus: 100,
-  dailyLoginWindow: 86400000,
-  defaultBoosterDuration: 3600000,
-  levelUpMessage: true,
-  prestigeLevel: 50,
-  prestigeXpRetention: 0.1,
+  xpPerMessage: 20, xpRandomBonus: 15, cooldown: 60000, xpMultiplier: 150,
+  bonusMediaUpload: 25, bonusLongMessage: 15, bonusVoicePerMinute: 10,
+  dailyLoginBonus: 100, dailyLoginWindow: 86400000, defaultBoosterDuration: 3600000,
+  levelUpMessage: true, prestigeLevel: 50, prestigeXpRetention: 0.1,
 };
 
 const LEVEL_TITLES = {
-  1: { title: 'Civilian', emoji: '👤' },
-  2: { title: 'Martial Arts Student', emoji: '🥋' },
-  3: { title: 'Ki Novice', emoji: '✨' },
-  4: { title: 'Ki Apprentice', emoji: '⚡' },
-  5: { title: 'Battle Trainee', emoji: '⚔️' },
-  6: { title: 'Rising Fighter', emoji: '🔥' },
-  7: { title: 'Z-Warrior in Training', emoji: '💪' },
-  8: { title: 'Earth Defender', emoji: '🌍' },
-  9: { title: 'Ki Adept', emoji: '💫' },
-  10: { title: 'Battle Disciple', emoji: '🛡️' },
-  11: { title: 'Serious Combatant', emoji: '⚡' },
-  12: { title: 'Elite Recruit', emoji: '🎖️' },
-  13: { title: 'Ki Specialist', emoji: '✴️' },
-  14: { title: 'Spirit Warrior', emoji: '👊' },
-  15: { title: 'Saiyan-Blooded', emoji: '💥' },
-  16: { title: 'Saiyan Fighter', emoji: '🔴' },
-  17: { title: 'Saiyan Elite', emoji: '🟠' },
-  18: { title: 'Saiyan Vanguard', emoji: '🟡' },
-  19: { title: 'Saiyan Commander', emoji: '⭐' },
-  20: { title: 'Saiyan Champion', emoji: '🏆' },
-  21: { title: 'Awakened Saiyan', emoji: '💛' },
-  22: { title: 'Ascended Saiyan', emoji: '⚡' },
-  23: { title: 'Radiant Saiyan', emoji: '✨' },
-  24: { title: 'Empowered Saiyan', emoji: '💪' },
-  25: { title: 'Ultra Saiyan', emoji: '🌟' },
-  26: { title: 'Limit-Break Saiyan', emoji: '💥' },
-  27: { title: 'Primal Saiyan', emoji: '🦍' },
-  28: { title: 'Unleashed Saiyan', emoji: '⚡' },
-  29: { title: 'Blazing Saiyan', emoji: '🔥' },
-  30: { title: 'Golden Aura Warrior', emoji: '🟡' },
-  31: { title: 'Apex Saiyan', emoji: '🔺' },
-  32: { title: 'Transcendent Warrior', emoji: '🌠' },
-  33: { title: 'Hyper-Ki Ascendant', emoji: '⚡' },
-  34: { title: 'Celestial Saiyan', emoji: '☄️' },
-  35: { title: 'Ultra Instinct Initiate', emoji: '🤍' },
-  36: { title: 'Ultra Instinct Adept', emoji: '💠' },
-  37: { title: 'Ultra Instinct Warrior', emoji: '💎' },
-  38: { title: 'Ultra Instinct Master', emoji: '🔷' },
-  39: { title: 'Ultra Instinct Ascendant', emoji: '🔮' },
-  40: { title: 'Ultra Instinct Supreme', emoji: '👁️' },
-  41: { title: 'Divine Aura Warrior', emoji: '��' },
-  42: { title: 'Spirit-God Disciple', emoji: '🙏' },
-  43: { title: 'Ki-Deity', emoji: '⚜️' },
-  44: { title: 'God Ki Initiate', emoji: '🔵' },
-  45: { title: 'God Ki Practitioner', emoji: '💙' },
-  46: { title: 'God Ki Warrior', emoji: '🌀' },
-  47: { title: 'God Ki Master', emoji: '💫' },
-  48: { title: 'Cosmic Saiyan', emoji: '🌌' },
-  49: { title: 'Universal Champion', emoji: '🌟' },
-  50: { title: 'Legendary Ascendant', emoji: '👑' },
+  1: { title: 'Civilian', emoji: '👤' }, 2: { title: 'Martial Arts Student', emoji: '🥋' },
+  3: { title: 'Ki Novice', emoji: '✨' }, 4: { title: 'Ki Apprentice', emoji: '⚡' },
+  5: { title: 'Battle Trainee', emoji: '⚔️' }, 6: { title: 'Rising Fighter', emoji: '🔥' },
+  7: { title: 'Z-Warrior in Training', emoji: '💪' }, 8: { title: 'Earth Defender', emoji: '🌍' },
+  9: { title: 'Ki Adept', emoji: '💫' }, 10: { title: 'Battle Disciple', emoji: '🛡️' },
+  11: { title: 'Serious Combatant', emoji: '⚡' }, 12: { title: 'Elite Recruit', emoji: '🎖️' },
+  13: { title: 'Ki Specialist', emoji: '✴️' }, 14: { title: 'Spirit Warrior', emoji: '👊' },
+  15: { title: 'Saiyan-Blooded', emoji: '💥' }, 16: { title: 'Saiyan Fighter', emoji: '🔴' },
+  17: { title: 'Saiyan Elite', emoji: '🟠' }, 18: { title: 'Saiyan Vanguard', emoji: '🟡' },
+  19: { title: 'Saiyan Commander', emoji: '⭐' }, 20: { title: 'Saiyan Champion', emoji: '🏆' },
+  21: { title: 'Awakened Saiyan', emoji: '💛' }, 22: { title: 'Ascended Saiyan', emoji: '⚡' },
+  23: { title: 'Radiant Saiyan', emoji: '✨' }, 24: { title: 'Empowered Saiyan', emoji: '💪' },
+  25: { title: 'Ultra Saiyan', emoji: '🌟' }, 26: { title: 'Limit-Break Saiyan', emoji: '💥' },
+  27: { title: 'Primal Saiyan', emoji: '🦍' }, 28: { title: 'Unleashed Saiyan', emoji: '⚡' },
+  29: { title: 'Blazing Saiyan', emoji: '🔥' }, 30: { title: 'Golden Aura Warrior', emoji: '🟡' },
+  31: { title: 'Apex Saiyan', emoji: '🔺' }, 32: { title: 'Transcendent Warrior', emoji: '🌠' },
+  33: { title: 'Hyper-Ki Ascendant', emoji: '⚡' }, 34: { title: 'Celestial Saiyan', emoji: '☄️' },
+  35: { title: 'Ultra Instinct Initiate', emoji: '🤍' }, 36: { title: 'Ultra Instinct Adept', emoji: '💠' },
+  37: { title: 'Ultra Instinct Warrior', emoji: '💎' }, 38: { title: 'Ultra Instinct Master', emoji: '🔷' },
+  39: { title: 'Ultra Instinct Ascendant', emoji: '🔮' }, 40: { title: 'Ultra Instinct Supreme', emoji: '👁️' },
+  41: { title: 'Divine Aura Warrior', emoji: '🌌' }, 42: { title: 'Spirit-God Disciple', emoji: '🙏' },
+  43: { title: 'Ki-Deity', emoji: '⚜️' }, 44: { title: 'God Ki Initiate', emoji: '🔵' },
+  45: { title: 'God Ki Practitioner', emoji: '💙' }, 46: { title: 'God Ki Warrior', emoji: '🌀' },
+  47: { title: 'God Ki Master', emoji: '💫' }, 48: { title: 'Cosmic Saiyan', emoji: '🌌' },
+  49: { title: 'Universal Champion', emoji: '🌟' }, 50: { title: 'Legendary Ascendant', emoji: '👑' },
 };
 
 const PRESTIGE_TITLES = {
-  1: { title: 'Eternal Saiyan', emoji: '♾️' },
-  2: { title: 'Infinite Aura Warrior', emoji: '🌈' },
-  3: { title: 'Timeless Instinct Master', emoji: '⏳' },
-  4: { title: 'Cosmic Vanguard', emoji: '🪐' },
+  1: { title: 'Eternal Saiyan', emoji: '♾️' }, 2: { title: 'Infinite Aura Warrior', emoji: '��' },
+  3: { title: 'Timeless Instinct Master', emoji: '⏳' }, 4: { title: 'Cosmic Vanguard', emoji: '🪐' },
   5: { title: 'Omni-Saiyan', emoji: '🌠' },
 };
 
 const ROLE_MILESTONES = [5, 10, 15, 20, 30, 50];
-
 class LevelingSystem {
   constructor() {
     this.users = new Map();
@@ -126,7 +88,7 @@ class LevelingSystem {
   }
 
   getKey(userId, guildId) {
-    return \`\${guildId}-\${userId}\`;
+    return `${guildId}-${userId}`;
   }
 
   getUser(userId, guildId) {
@@ -251,11 +213,11 @@ class LevelingSystem {
     if (user.prestige > 0) {
       const prestigeData = PRESTIGE_TITLES[user.prestige] || PRESTIGE_TITLES[5];
       const levelData = LEVEL_TITLES[user.level] || LEVEL_TITLES[50];
-      return { title: \`\${prestigeData.emoji} \${prestigeData.title} - \${levelData.title}\`,
+      return { title: `${prestigeData.emoji} ${prestigeData.title} - ${levelData.title}`,
                emoji: prestigeData.emoji, prestige: user.prestige };
     }
     const levelData = LEVEL_TITLES[user.level] || LEVEL_TITLES[1];
-    return { title: \`\${levelData.emoji} \${levelData.title}\`, emoji: levelData.emoji, prestige: 0 };
+    return { title: `${levelData.emoji} ${levelData.title}`, emoji: levelData.emoji, prestige: 0 };
   }
 
   getLeaderboard(guildId, limit = 10, weekly = false) {
